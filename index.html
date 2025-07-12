@@ -52,7 +52,6 @@
             100% { background-position: 0% 50%; }
         }
         
-        /* MODIFICATION: New shimmer animation */
         @keyframes shimmer-animation {
             from {
                 transform: translateX(-100%);
@@ -112,7 +111,7 @@
             align-items: center;
             flex-direction: column;
             z-index: 1000;
-            transition: opacity 0.8s ease-out; /* MODIFICATION: Adjusted timing */
+            transition: opacity 0.8s ease-out;
         }
 
         #splash-screen::before {
@@ -122,14 +121,14 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.5); /* Dark overlay for text readability */
+            background-color: rgba(0,0,0,0.5);
         }
 
         .splash-content {
             position: relative;
             text-align: center;
             z-index: 1001;
-            transition: opacity 0.3s ease-out; /* MODIFICATION: Added transition for fade out */
+            transition: opacity 0.3s ease-out;
         }
 
         #enter-app-btn {
@@ -156,7 +155,6 @@
             transform: translateY(-3px);
         }
         
-        /* MODIFICATION: New shimmer element styles */
         #shimmer-effect {
             position: absolute;
             top: 0;
@@ -247,7 +245,7 @@
 
         /* --- Hero Section --- */
         .hero-content {
-            text-align: center; /* MODIFICATION: Centered all content within the hero section */
+            text-align: center;
         }
         
         .hero h1 {
@@ -398,7 +396,7 @@
         }
         
         .results-window {
-            padding: 2rem;
+            padding: 0.5rem; /* MODIFICATION: Reduced padding for accordion */
             flex-grow: 1;
             color: var(--secondary-text);
             overflow-y: auto;
@@ -432,21 +430,94 @@
             margin: 4rem auto;
         }
 
+        /* --- NEW: Accordion Styles --- */
+        .accordion-item {
+            border-bottom: 1px solid var(--border-color);
+        }
+        .accordion-item:last-child {
+            border-bottom: none;
+        }
+        .accordion-button {
+            background-color: transparent;
+            color: var(--primary-text);
+            cursor: pointer;
+            padding: 1rem;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .accordion-button:hover, .accordion-button.active {
+            background-color: rgba(58, 134, 255, 0.1);
+        }
+        .accordion-button .report-date {
+            color: var(--secondary-text);
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.85rem;
+            margin-right: 1.5rem;
+            flex-shrink: 0;
+            min-width: 120px;
+        }
+        .accordion-button .report-title {
+            flex-grow: 1;
+        }
+        .accordion-button::after {
+            content: '+';
+            font-size: 1.5rem;
+            color: var(--secondary-text);
+            margin-left: 1rem;
+            transition: transform 0.3s ease;
+        }
+        .accordion-button.active::after {
+            content: "−";
+        }
+        .panel {
+            padding: 0 1rem;
+            background-color: rgba(0,0,0,0.2);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out;
+        }
+        .panel-content {
+            padding: 1.5rem 0.5rem;
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: var(--secondary-text);
+        }
+        .panel-content p {
+            white-space: pre-wrap;
+            font-family: 'Roboto Mono', monospace;
+            margin-top: 0;
+        }
+        .panel-content small {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        .panel-content a {
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+        .panel-content a:hover {
+            text-decoration: underline;
+        }
+
+
     </style>
 </head>
 <body>
-
-    <!-- Splash Screen -->
     <div id="splash-screen">
-        <!-- MODIFICATION: New shimmer element -->
         <div id="shimmer-effect"></div>
         <div class="splash-content">
             <h1 style="font-size: 4rem; font-weight: 700; color: white; margin-bottom: 2rem; text-shadow: 0 0 20px rgba(255, 255, 255, 0.7);">Prism</h1>
             <a href="#" id="enter-app-btn">Enter</a>
         </div>
     </div>
-
-    <!-- Main Application Wrapper -->
     <div id="main-app">
         <nav class="navbar container">
             <div class="logo">Prism</div>
@@ -458,7 +529,6 @@
             </div>
             <a href="#" class="btn btn-primary">Watch Demo</a>
         </nav>
-
         <header class="hero">
             <div class="container hero-content">
                 <h1 style="font-size: 3.8rem; max-width: 750px; margin: 0 auto; line-height: 1.2;">Clarity From Complexity.</h1>
@@ -473,35 +543,28 @@
                 <div class="controls-panel">
                     <div class="control-section">
                         <h2>1. Build Query</h2>
-                        <ul id="main-query-group" class="query-group">
-                            <!-- Query items will be added here as LI elements -->
-                        </ul>
+                        <ul id="main-query-group" class="query-group"></ul>
                         <div class="group-controls">
                             <button class="btn btn-secondary add-condition" data-target="main-query-group">+ Add Condition</button>
-                            <button class="btn btn-secondary add-group" data-target="main-query-group">+ Add Group</button>
                         </div>
                     </div>
                     <div class="control-section">
                         <h2>2. Select Date Range</h2>
                         <select id="dateRangeSelect" class="query-select" style="width: 100%;">
-                            <option value="undefined">Undefined</option>
-                            <option value="1">Last 1 Day</option>
+                            <option value="all">All Time</option>
                             <option value="7">Last 7 Days</option>
                             <option value="30">Last 30 Days</option>
+                            <option value="90">Last 90 Days</option>
+                            <option value="365">Last Year</option>
                             <option value="custom">Custom Range</option>
                         </select>
                         <div id="customDateContainer">
-                            <input type="date" id="startDate" class="query-input" style="width: 100%;">
-                            <input type="date" id="endDate" class="query-input" style="width: 100%;">
+                            <input type="date" id="startDate">
+                            <input type="date" id="endDate">
                         </div>
                     </div>
                     <div class="control-section">
-                        <h2>3. Preview Query</h2>
-                        <button id="previewQueryBtn" class="btn btn-secondary" style="width: 100%; margin-bottom: 1rem;">Generate Preview</button>
-                        <div id="query-preview-box">Your query preview will appear here...</div>
-                    </div>
-                    <div class="control-section">
-                        <h2>4. Settings</h2>
+                        <h2>3. Settings</h2>
                         <div class="checkbox-container" style="display: flex; align-items: center; gap: 0.75rem; background-color: #2c313a; padding: 1rem; border-radius: 6px;">
                             <input type="checkbox" id="extractFullReport" name="extractFullReport" style="accent-color: var(--accent-pink); width: 18px; height: 18px;">
                             <label for="extractFullReport">Extract Full Report (not just summary)</label>
@@ -512,14 +575,14 @@
 
                 <div class="results-panel">
                     <div class="results-window" id="resultsWindow">
-                        <div class="results-placeholder" style="text-align: center;">
+                        <div class="results-placeholder" style="text-align: center; padding: 2rem;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="color: var(--border-color); margin-bottom: 1rem;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
                             <p>Your query results will appear here.</p>
                         </div>
                     </div>
                     <div class="ai-input-area">
-                        <input type="text" id="ai-prompt" placeholder="Ask AI...">
-                        <button id="generateInsightsBtn" class="btn btn-primary">Generate Insights...</button>
+                        <input type="text" id="ai-prompt" placeholder="Ask AI to summarize results...">
+                        <button id="generateInsightsBtn" class="btn btn-primary">Generate Insights</button>
                     </div>
                 </div>
             </div>
@@ -532,10 +595,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // --- Global variable to hold query results for the AI ---
             let currentQueryResults = [];
 
-            // --- Splash Screen Logic ---
             const splashScreen = document.getElementById('splash-screen');
             const splashContent = document.querySelector('.splash-content');
             const enterBtn = document.getElementById('enter-app-btn');
@@ -554,16 +615,14 @@
                     }, { once: true });
                 }, { once: true });
             });
-
-
-            // --- Main Application Logic ---
+            
             const buildQueryBtn = document.getElementById('buildQueryBtn');
             const queryCanvas = document.getElementById('queryCanvas');
-            const generateInsightsBtn = document.getElementById('generateInsightsBtn');
-            const aiPromptInput = document.getElementById('ai-prompt');
             const runQueryBtn = document.getElementById('runQueryBtn');
             const resultsWindow = document.getElementById('resultsWindow');
-            
+            const dateRangeSelect = document.getElementById('dateRangeSelect');
+            const customDateContainer = document.getElementById('customDateContainer');
+
             buildQueryBtn.addEventListener('click', () => {
                 queryCanvas.style.display = 'block';
                 buildQueryBtn.closest('.hero').style.display = 'none';
@@ -572,180 +631,156 @@
                     addCondition('main-query-group');
                 }
             });
-
+            
             document.getElementById('queryCanvas').addEventListener('click', function(e) {
                 if (e.target.classList.contains('add-condition')) addCondition(e.target.dataset.target);
-                if (e.target.classList.contains('add-group')) addGroup(e.target.dataset.target);
                 if (e.target.classList.contains('remove-btn')) e.target.closest('li').remove();
-                if (e.target.classList.contains('and-or-toggle')) toggleAndOr(e.target);
             });
 
+            // MODIFICATION: Add accordion click listener to the results window
+            resultsWindow.addEventListener('click', function(e) {
+                const button = e.target.closest('.accordion-button');
+                if (button) {
+                    button.classList.toggle('active');
+                    const panel = button.nextElementSibling;
+                    if (panel.style.maxHeight) {
+                        panel.style.maxHeight = null;
+                    } else {
+                        panel.style.maxHeight = panel.scrollHeight + "px";
+                    }
+                }
+            });
+
+            dateRangeSelect.addEventListener('change', () => {
+                customDateContainer.style.display = (dateRangeSelect.value === 'custom') ? 'flex' : 'none';
+            });
+            
             runQueryBtn.addEventListener('click', () => {
                 resultsWindow.innerHTML = `<div class="loading-spinner"></div><p style="text-align: center;">Refracting data...</p>`;
                 const queryConditions = getQueryConditions();
-
+                
                 fetch('reports.json')
                     .then(response => {
                         if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
                         return response.json();
                     })
                     .then(allReports => {
-                        const filteredResults = allReports.filter(report => {
-                            if (queryConditions.length === 0) return true;
-                            return queryConditions.every(cond => {
-                                const fieldValue = cond.field.toLowerCase();
-                                const searchValue = cond.value.toLowerCase();
-                                if (!searchValue) return true;
-                                switch (fieldValue) {
-                                    case 'species':
-                                    case 'waterbody':
-                                        return report.full_text.toLowerCase().includes(searchValue);
-                                    case 'area':
-                                        return report.area.toLowerCase().includes(searchValue);
-                                    case 'timeframe':
-                                        return report.title.toLowerCase().includes(searchValue);
-                                    default:
-                                        return false;
-                                }
-                            });
-                        });
-                        
-                        currentQueryResults = filteredResults;
+                        const filteredResults = filterReports(allReports, queryConditions);
+                        currentQueryResults = filteredResults; 
                         displayResults(filteredResults);
                     })
                     .catch(error => {
                         console.error("Error fetching or processing reports:", error);
-                        resultsWindow.innerHTML = `<p style="color: #ff4d4d; text-align: center;">Error: Could not load report data. Please make sure 'reports.json' is in the same directory.</p>`;
+                        resultsWindow.innerHTML = `<p style="color: #ff4d4d; text-align: center;">Error: Could not load report data. Please ensure 'reports.json' is in the same directory.</p>`;
                     });
             });
-            
-            // --- UPDATED Event Listener for the "Generate Insights" button ---
-            generateInsightsBtn.addEventListener('click', () => {
-                const userQuestion = aiPromptInput.value;
-                if (!userQuestion) {
-                    alert("Please enter a question for the AI.");
-                    return;
-                }
-                if (currentQueryResults.length === 0) {
-                    alert("Please run a query to get some data before asking the AI.");
-                    return;
+
+            function filterReports(allReports, queryConditions) {
+                const dateRangeValue = dateRangeSelect.value;
+                let startDate = null;
+                let endDate = new Date();
+
+                if (dateRangeValue !== 'all') {
+                    if (dateRangeValue === 'custom') {
+                        startDate = document.getElementById('startDate').value ? new Date(document.getElementById('startDate').value) : null;
+                        endDate = document.getElementById('endDate').value ? new Date(document.getElementById('endDate').value) : new Date();
+                    } else {
+                        const days = parseInt(dateRangeValue, 10);
+                        if (!isNaN(days)) {
+                            startDate = new Date();
+                            startDate.setDate(startDate.getDate() - days);
+                        }
+                    }
                 }
 
-                // Step 1: Format the data for the API.
-                const reportText = formatResultsForAI(currentQueryResults);
-                const finalPrompt = `Based on the following data, answer the question: "${userQuestion}"\n\n---DATA---\n${reportText}`;
-                
-                resultsWindow.innerHTML += `<div class="loading-spinner"></div><p style="text-align: center;">Sending data to public API...</p>`;
-                
-                // Step 2: Send the data to the public API
-                fetch('https://jsonplaceholder.typicode.com/posts', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        title: userQuestion,
-                        body: finalPrompt,
-                        userId: 1, // Just example data
-                    }),
-                    headers: {
-                        'Content-type': 'application/json; charset=UTF-8',
-                    },
-                })
-                .then(response => response.json())
-                .then(json => {
-                    console.log("Response from Test API:", json);
-                    // Step 3: Display a formatted response
-                    const apiResponse = `
-                        <div class="result-item" style="background: rgba(58, 134, 255, 0.1); border-color: var(--accent-blue);">
-                            <h4>Public API Response:</h4>
-                            <p>The API has successfully received your data. It responded with the following confirmation:</p>
-                            <pre style="background: #000; padding: 1rem; border-radius: 6px; white-space: pre-wrap;">${JSON.stringify(json, null, 2)}</pre>
-                            <small>This confirms the end-to-end workflow is functional.</small>
-                        </div>
-                    `;
-                    const spinner = resultsWindow.querySelector('.loading-spinner');
-                    if(spinner) spinner.parentElement.remove();
+                return allReports.filter(report => {
+                    // Date Filtering
+                    let dateIsValid = true;
+                    if(startDate) {
+                        try {
+                            const reportDate = new Date(report.date);
+                            // Handling for invalid dates like "Current Report"
+                            if (isNaN(reportDate.getTime())) {
+                                throw new Error("Invalid Date");
+                            }
+                            // Set time to 0 to compare dates only
+                            reportDate.setHours(0,0,0,0);
+                            startDate.setHours(0,0,0,0);
+                            
+                            if (reportDate < startDate || reportDate > endDate) {
+                                dateIsValid = false;
+                            }
+                        } catch(e) {
+                            // If date is invalid (e.g., "Current Report"), exclude it from date-filtered queries
+                            // unless the range is "all time".
+                            if(dateRangeValue !== 'all') {
+                                dateIsValid = false;
+                            }
+                        }
+                    }
+                    if (!dateIsValid) return false;
                     
-                    resultsWindow.innerHTML += apiResponse;
-                    resultsWindow.scrollTop = resultsWindow.scrollHeight;
-                })
-                .catch(error => {
-                    console.error("Error with API call:", error);
-                    const spinner = resultsWindow.querySelector('.loading-spinner');
-                    if(spinner) spinner.parentElement.remove();
-                    alert("Failed to get a response from the public API.");
+                    // Condition Filtering
+                    if (queryConditions.length === 0) return true;
+                    return queryConditions.every(cond => {
+                        const searchValue = cond.value.toLowerCase();
+                        if (!searchValue) return true; // Ignore empty condition
+                        
+                        switch (cond.field.toLowerCase()) {
+                            case 'species':
+                                return report.species_mentioned && report.species_mentioned.some(s => s.toLowerCase().includes(searchValue));
+                            case 'area':
+                                return report.area.toLowerCase().includes(searchValue);
+                            case 'waterbody':
+                                return report.full_text.toLowerCase().includes(searchValue);
+                             case 'any text':
+                                return report.full_text.toLowerCase().includes(searchValue) || report.title.toLowerCase().includes(searchValue) || report.area.toLowerCase().includes(searchValue);
+                            default:
+                                return false;
+                        }
+                    });
                 });
-            });
-
-            function formatResultsForAI(results) {
-                if (results.length === 0) {
-                    return "No data was found for the user's query.";
-                }
-                return results.map(report => {
-                    return `
-    Report Area: ${report.area}
-    Report Title: ${report.title}
-    Content: ${report.full_text}
-                    `.trim();
-                }).join('\n\n---\n\n');
             }
 
+            // MODIFICATION: Updated displayResults to create the accordion layout
             function displayResults(results) {
-                resultsWindow.innerHTML = ''; 
+                resultsWindow.innerHTML = '';
                 if (results.length === 0) {
-                    resultsWindow.innerHTML = '<p style="text-align: center;">No reports found matching your criteria.</p>';
+                    resultsWindow.innerHTML = '<p style="text-align: center; padding: 2rem;">No reports found matching your criteria.</p>';
                     return;
                 }
-                results.forEach(report => {
-                    const resultEl = document.createElement('div');
-                    resultEl.className = 'result-item';
-                    resultEl.innerHTML = `
-                        <h4>${report.area}: ${report.title}</h4>
-                        <p>${report.full_text.substring(0, 250)}...</p>
-                        <small>Report ID: ${report.reportId}</small>
-                    `;
-                    resultsWindow.appendChild(resultEl);
-                });
+                const resultsHtml = results.map(report => `
+                    <div class="accordion-item">
+                        <button class="accordion-button">
+                            <span class="report-date">${report.date}</span>
+                            <span class="report-title">${report.area}: ${report.title}</span>
+                        </button>
+                        <div class="panel">
+                            <div class="panel-content">
+                                <p>${report.full_text}</p>
+                                <hr style="border-color: var(--border-color); opacity: 0.5; margin: 1rem 0;">
+                                <small>URL: <a href="${report.source_url}" target="_blank" rel="noopener noreferrer">${report.source_url}</a></small>
+                                <br>
+                                <small>Species Mentioned: ${report.species_mentioned.join(', ') || 'None specified'}</small>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                resultsWindow.innerHTML = resultsHtml;
             }
 
             function getQueryConditions() {
                 const conditions = [];
                 document.querySelectorAll('.condition-row').forEach(row => {
-                    conditions.push({
-                        field: row.querySelector('.query-select').value,
-                        value: row.querySelector('.query-input').value
-                    });
+                    const field = row.querySelector('.query-select').value;
+                    const value = row.querySelector('.query-input').value;
+                    if (value) {
+                         conditions.push({ field, value });
+                    }
                 });
                 return conditions;
             }
-
-            function updateInputHints(selectElement) {
-                const selectedValue = selectElement.value;
-                const inputElement = selectElement.closest('.condition-row').querySelector('.query-input');
-                let placeholder = 'Enter value...';
-                let title = 'Enter a search term.';
-                switch (selectedValue) {
-                    case 'Species':
-                        placeholder = "e.g., salmon, trout...";
-                        title = "Enter a fish species, e.g., 'salmon', 'trout', 'grayling'";
-                        break;
-                    case 'Area':
-                        placeholder = "e.g., Anchorage, Kenai...";
-                        title = "Enter a general area, e.g., 'Anchorage', 'Kenai Peninsula'";
-                        break;
-                    case 'Waterbody':
-                        placeholder = "e.g., Ship Creek, Symphony Lake...";
-                        title = "Enter a specific lake, river, or creek, e.g., 'Ship Creek', 'Symphony Lake'";
-                        break;
-                    case 'Timeframe':
-                        placeholder = "e.g., Jul, Oct - Feb...";
-                        title = "Enter a month or period, e.g., 'Jul', 'Oct - Feb', 'Current Report'";
-                        break;
-                }
-                inputElement.placeholder = placeholder;
-                inputElement.title = title;
-            }
-
-            let groupIdCounter = 0;
-
+            
             function addCondition(targetGroupId) {
                 const targetGroup = document.getElementById(targetGroupId);
                 const li = document.createElement('li');
@@ -755,10 +790,9 @@
                             <option>Species</option>
                             <option>Area</option>
                             <option>Waterbody</option>
-                            <option>Timeframe</option>
+                            <option>Any Text</option>
                         </select>
-                        <button class="and-or-toggle btn">AND</button>
-                        <input type="text" class="query-input" placeholder="Enter value...">
+                        <input type="text" class="query-input" placeholder="e.g., salmon, trout...">
                         <button class="remove-btn" style="background: none; border: none; color: var(--secondary-text); font-size: 1.5rem; cursor: pointer; padding:0;">&times;</button>
                     </div>
                 `;
@@ -767,33 +801,33 @@
                 updateInputHints(newSelect);
             }
             
-            window.updateInputHints = updateInputHints;
-
-            function addGroup(targetGroupId) {
-                const parentGroup = document.getElementById(targetGroupId);
-                groupIdCounter++;
-                const newGroupId = `group-${groupIdCounter}`;
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 6px;">
-                        <span style="font-size: 0.8rem; color: var(--secondary-text); margin-left: 5px;">Sub-Group</span>
-                        <button class="remove-btn" style="background: none; border: none; color: var(--secondary-text); font-size: 1.5rem; cursor: pointer; padding:0;">&times;</button>
-                    </div>
-                    <ul class="query-group" id="${newGroupId}"></ul>
-                    <div class="group-controls">
-                        <button class="btn btn-secondary add-condition" data-target="${newGroupId}">+ Add Condition</button>
-                        <button class="btn btn-secondary add-group" data-target="${newGroupId}">+ Add Group</button>
-                    </div>
-                `;
-                parentGroup.appendChild(li);
-                addCondition(newGroupId);
-            }
-            
-            function toggleAndOr(button) {
-                button.textContent = (button.textContent === 'AND') ? 'OR' : 'AND';
+            window.updateInputHints = function(selectElement) {
+                const selectedValue = selectElement.value;
+                const inputElement = selectElement.closest('.condition-row').querySelector('.query-input');
+                let placeholder = 'Enter value...';
+                let title = 'Enter a search term.';
+                switch (selectedValue) {
+                    case 'Species':
+                        placeholder = "e.g., salmon, halibut...";
+                        title = "Enter a fish species, e.g., 'salmon', 'trout', 'halibut'";
+                        break;
+                    case 'Area':
+                        placeholder = "e.g., Anchorage, Kenai...";
+                        title = "Enter a general area, e.g., 'Anchorage', 'Kenai Peninsula', 'Kodiak'";
+                        break;
+                    case 'Waterbody':
+                        placeholder = "e.g., Ship Creek, Buskin River...";
+                        title = "Enter a specific lake, river, or creek, e.g., 'Ship Creek', 'Buskin River'";
+                        break;
+                    case 'Any Text':
+                         placeholder = "e.g., slow fishing, weir...";
+                         title = "Search for any word or phrase in the report.";
+                         break;
+                }
+                inputElement.placeholder = placeholder;
+                inputElement.title = title;
             }
         });
     </script>
-
 </body>
 </html>

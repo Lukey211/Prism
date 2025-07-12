@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collapsible Report List</title>
+    <style>
+        /* Using the color scheme and fonts from your index.html for consistency */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap');
+
+        :root {
+            --dark-bg: #0D0F12;
+            --primary-text: #FFFFFF;
+            --secondary-text: #8A94A3;
+            --accent-blue: #3A86FF;
+            --card-bg: rgba(26, 29, 36, 0.7);
+            --border-color: #2C313A;
+        }
+
+        .results-container {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--primary-text);
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--primary-text);
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        .accordion-item {
+            border-bottom: 1px solid var(--border-color);
+        }
+        .accordion-item:last-child {
+            border-bottom: none;
+        }
+
+        .accordion-button {
+            background-color: transparent;
+            color: var(--primary-text);
+            cursor: pointer;
+            padding: 18px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .accordion-button:hover, .accordion-button.active {
+            background-color: rgba(58, 134, 255, 0.1); /* Light blue highlight */
+        }
+
+        .accordion-button .report-date {
+            color: var(--secondary-text);
+            font-weight: 400;
+            margin-right: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .accordion-button .report-title {
+            flex-grow: 1;
+        }
+
+        .accordion-button::after {
+            content: '+'; /* Plus icon */
+            font-size: 1.5rem;
+            color: var(--secondary-text);
+            margin-left: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-button.active::after {
+            content: "−"; /* Minus icon */
+            transform: rotate(180deg);
+        }
+
+        .panel {
+            padding: 0 18px;
+            background-color: #12151a;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: var(--secondary-text);
+        }
+        
+        .panel-content {
+            padding: 15px 5px;
+            white-space: pre-wrap; /* Preserves formatting of the report text */
+            font-family: 'Roboto Mono', monospace;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="results-container">
+    <h2>Search Results</h2>
+
+    <div class="accordion-item">
+        <button class="accordion-button">
+            <span class="report-date">Current Report</span>
+            <span class="report-title">Recent Emergency Orders & Press Releases for Petersburg</span>
+        </button>
+        <div class="panel">
+            <div class="panel-content">
+Regionally king salmon retention is currently closed for nonresidents in all waters in the Petersburg/Wrangell Management Area except for the Wrangell Narrows portion of the Terminal Harvest Area (closes August 15th) and City Creek (closes July 14th). In order to not exceed the 2025 sport allocation of king salmon this closure is necessary.
+
+The closure does not impact resident anglers. Starting July 15th, the remaining saltwater portion of the Petersburg/Wrangell area will open to resident anglers for king salmon retention with a bag and possession limit of one over 28 inches.Traditionally king salmon catches slow down over the next few weeks but they may still be caught.
+
+There are separate regulations for the Blind Slough/Wrangell Narrows Terminal Harvest Area, City Creek, and the remainder of the region. Please see the Advisory Announcement onour websitefor maps and more specific information about each of these locations. Remember that a king salmon stamp is required whenever fishing for king salmon (including catch and release).
+
+Sockeye salmon are in the saltwater now and entering some local streams. Fishing for them may be slow as they are not aggressive feeders and as such catch rates should be expectedly low. Anglers are reminded that snagging is not allowed in any area freshwaters where sockeye salmon are found.
+
+Pink and Coho salmon should begin to show. Area coho fishing in marine waters traditionally gets going around the third week in July but there have been some early catches up north so we may see them sooner.
+            </div>
+        </div>
+    </div>
+    
+    <div class="accordion-item">
+        <button class="accordion-button">
+            <span class="report-date">Current Report</span>
+            <span class="report-title">Recent Emergency Orders & Press Releases for Sitka</span>
+        </button>
+        <div class="panel">
+            <div class="panel-content">
+King salmon fishing has been good with anglers reporting in many areas around Sitka – including the typical locations (Biorka, Vitskari, and off Kruzoff). Kings are also returning to the Medvejie Hatchery and Silver Bay. Currently, there are no special regulations for kings returning to Medvejie or Silver Bay (regional regulations apply). There is a small area near the barrier net behind the net pens at Medvejie that is now closed to fishing in order to allow hatchery staff access to broodstock. Signs are posted. Resident Anglers are allowed one king daily with no annual limit. The nonresident king fishery isclosedas of July 7th.
+
+For other salmon: Coho are starting to show up offshore and there have been reports of them being large for this early. Chum have also recently shown in Sitka Sound in force. Sockeye salmon are starting off strong. As of 7/6, over 39,900 have passed through the Redoubt Weir. It’s still early for Pink Salmon.
+            </div>
+        </div>
+    </div>
+
+    <div class="accordion-item">
+        <button class="accordion-button">
+            <span class="report-date">Jun 15, 2024</span>
+            <span class="report-title">Recent Emergency Orders & Press Releases for Prince of Wales Island</span>
+        </button>
+        <div class="panel">
+            <div class="panel-content">
+Summer is in full swing on Prince of Wales Island with the arrival of sockeye salmon in some freshwater drainages. Marine fishing for king salmon is currently fair in marine waters; while halibut, rockfish, lingcod and shellfish fishing has been good in marine waters around Prince of Wales.
+
+Check out thewefishakpage on the ADF&G website for thegofishakinteractive map to discover fishing locations and information on species run timing, fishing gear selections, and boat and angler access tips!
+
+Guides and Business Owners: don’t forget to register for 2024! You can register online at theADF&G Store. Southeast saltwater guides are required to use an eLogbook.
+
+King salmon fishing is now open on the east side of Prince of Wales and fishing will likely be fair. King salmon fishing on the west side of Prince of Wales has been slower than past years but can change daily by location.
+            </div>
+        </div>
+    </div>
+
+    <div class="accordion-item">
+        <button class="accordion-button">
+            <span class="report-date">Jun 05, 2024</span>
+            <span class="report-title">Recent Emergency Orders & Press Releases for Yakutat</span>
+        </button>
+        <div class="panel">
+            <div class="panel-content">
+There are a few sockeye salmon in the Situk River. The weir has passed about 100 sockeye upstream so far. There are only a few small schools holding downstream of the weir to the mouth. Numbers should continue to build throught the coming weeks.
+
+Dolly fishing is excellent right now on the Situk. Dollies are spread throughout the drainage and are feeding on salmon fry and smolt exiting the system.
+
+Sportfishing for king salmon is open in Yakutat area marine waters. Reports from marine anglers have indicated slow fishing for kings in Yakutat Bay. Fishing is really spotty and there seems to be a lack of bait fish inside the islands. Water temps are on the cold side of average, which may explain why there is a lack of bait and subsequently a lack of king salmon. Based on reports, fishing is more successful along the outer coast waters than inside the bay. Most anglers troll spoons or herring behind a flasher.
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const accordions = document.querySelectorAll(".accordion-button");
+
+    accordions.forEach(accordion => {
+        accordion.addEventListener("click", function() {
+            // Toggle the 'active' class on the button for styling
+            this.classList.toggle("active");
+
+            // Get the panel (content area) that is the next element
+            const panel = this.nextElementSibling;
+
+            // Check if the panel is already open (maxHeight is not 0)
+            if (panel.style.maxHeight) {
+                // If it's open, close it by setting maxHeight to null
+                panel.style.maxHeight = null;
+            } else {
+                // If it's closed, open it by setting maxHeight to its scrollHeight
+                // scrollHeight is the total height of the content, even if not visible
+                panel.style.maxHeight = panel.scrollHeight + "px";
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
