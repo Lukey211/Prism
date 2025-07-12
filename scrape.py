@@ -2,187 +2,165 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from urllib.parse import urljoin
+import os
 
 BASE_URL = "https://www.adfg.alaska.gov"
-START_URL = "https://www.adfg.alaska.gov/sf/FishingReports/"
+FISH_COUNTS_URL = "https://www.adfg.alaska.gov/sf/FishCounts/"
 
-# List of common species to check for in the report text
-SPECIES_KEYWORDS = [
-    "king salmon", "chinook", "sockeye", "red salmon", "coho", "silver salmon",
-    "pink salmon", "chum", "halibut", "lingcod", "rockfish", "dolly varden",
-    "trout", "steelhead", "arctic char", "grayling", "northern pike", "burbot"
-]
+# Use a persistent session with robust headers to appear more like a browser
+SESSION = requests.Session()
+SESSION.headers.update({
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
+})
 
-def get_soup(url):
-    """Fetches a URL with a browser-like header and returns a BeautifulSoup object."""
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-    try:
-        response = requests.get(url, timeout=20, headers=headers)
-        response.raise_for_status()
-        return BeautifulSoup(response.text, 'html.parser')
-    except requests.exceptions.RequestException as e:
-        print(f"  - Warning: Could not fetch {url}. Error: {e}")
-        return None
+def get_soup(url, method='get', data=None, retries=3, backoff_factor=3):
+    """
+    Fetches a URL with retry logic using the global persistent session.
+    """
+    # Set the Referer header to the last page visited, crucial for navigation
+    if SESSION.headers.get('Referer'):
+        pass # The session object might handle it, but we can be explicit
+    
+    for i in range(retries):
+        try:
+            if method.lower() == 'post':
+                response = SESSION.post(url, timeout=45, data=data)
+            else:
+                response = SESSION.get(url, timeout=45)
+            
+            response.raise_for_status()
+            
+            # Update the referer for the next request
+            SESSION.headers.update({'Referer': url})
+            
+            return BeautifulSoup(response.text, 'html.parser')
+            
+        except requests.exceptions.RequestException as e:
+            print(f"  - Warning (Attempt {i + 1}/{retries}): Could not fetch {url}. Error: {e}")
+            if i < retries - 1:
+                wait_time = backoff_factor * (2 ** i)
+                print(f"    Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+            else:
+                print(f"  - CRITICAL: All {retries} attempts failed for {url}.")
+                return None
 
 def scrape_fish_counts():
-    """Fetches and processes structured fish count data from ADF&G."""
-    print("\n--- STAGE 4: Scraping Fish Counts ---")
-    fish_counts_page_url = "https://www.adfg.alaska.gov/sf/FishCounts/"
-    soup = get_soup(fish_counts_page_url)
-    if not soup:
-        print("  - Warning: Could not fetch fish counts page.")
+    """
+    Fetches fish count data by correctly navigating the multi-step form process.
+    """
+    print("\n--- STAGE 4: Scraping Fish Counts (Corrected Logic) ---")
+    
+    print(f"-> Fetching main fish count page: {FISH_COUNTS_URL}")
+    main_soup = get_soup(FISH_COUNTS_URL)
+    if not main_soup:
+        print("  - ABORT: Could not fetch the main fish counts page.")
         return
 
-    json_link = soup.find('a', href=lambda href: href and href.endswith('.json'))
+    location_form = main_soup.find('form', id='selectLocation')
+    if not location_form:
+        print("  - ABORT: Could not find the initial location selection form.")
+        return
+        
+    locations = [{'id': o['value'], 'name': o.text.strip()} for o in location_form.find_all('option') if o.get('value')]
+    print(f"-> Found {len(locations)} potential count locations.")
     
-    if json_link:
-        json_url = urljoin(BASE_URL, json_link['href'])
-        print(f"-> Found fish count JSON data at: {json_url}")
-        try:
-            response = requests.get(json_url, timeout=20)
-            response.raise_for_status()
-            fish_count_data = response.json()
-            
-            output_filename = 'fish_counts.json'
-            with open(output_filename, 'w', encoding='utf-8') as f:
-                json.dump(fish_count_data, f, indent=2, ensure_ascii=False)
-            print(f"✅ Success! Saved {len(fish_count_data)} fish count records to {output_filename}.")
+    all_count_data = []
+    loc_form_action_url = urljoin(FISH_COUNTS_URL, location_form['action'])
 
-        except requests.exceptions.RequestException as e:
-            print(f"  - Warning: Could not fetch fish count JSON. Error: {e}")
-        except json.JSONDecodeError:
-            print("  - Warning: Failed to parse fish count JSON.")
+    for loc in locations:
+        time.sleep(2)
+        print(f"\n--> Processing Location: {loc['name']} (ID: {loc['id']})")
+        
+        # STEP 1: Submit the location to get the page with species and year selectors
+        species_page_soup = get_soup(loc_form_action_url, method='post', data={'countLocationID': loc['id']})
+
+        if not species_page_soup:
+            continue
+
+        # STEP 2: Find the second form on the new page
+        species_year_form = species_page_soup.find('form', id='selectSpeciesYearLocation')
+        if not species_year_form:
+            print(f"    - No species/year data form found for {loc['name']}. Skipping.")
+            continue
+            
+        species_select = species_year_form.find('select', {'name': 'SpeciesID'})
+        year_select = species_year_form.find('select', {'name': 'year'})
+
+        if not species_select or not year_select:
+            print(f"    - Page for {loc['name']} is missing species or year dropdowns. Skipping.")
+            continue
+        
+        results_form_action_url = urljoin(FISH_COUNTS_URL, species_year_form['action'])
+        
+        # STEP 3: Get all available years and species from the form
+        available_years = [y['value'] for y in year_select.find_all('option')]
+        species_list = [{'id': s['value'], 'name': s.text.strip()} for s in species_select.find_all('option') if s.get('value')]
+        
+        print(f"    - Found {len(species_list)} species and {len(available_years)} years of data.")
+
+        for species in species_list:
+            time.sleep(1)
+            print(f"    -> Requesting data for species: {species['name']}...")
+            
+            # STEP 4: Build the payload with location, species, AND ALL years
+            payload = {
+                'countLocationID': loc['id'],
+                'SpeciesID': species['id'],
+                'year': available_years,
+                'Submit': 'Submit'
+            }
+            
+            # STEP 5: Submit the complete form to get the final results page
+            results_page_soup = get_soup(results_form_action_url, method='post', data=payload)
+
+            if not results_page_soup:
+                continue
+
+            # STEP 6: Find the JSON export link and download the data
+            json_link = results_page_soup.find('a', href=lambda href: href and 'export.JSON' in href)
+            
+            if json_link:
+                json_url = urljoin(FISH_COUNTS_URL, json_link['href'])
+                print(f"      -> Fetching JSON data from: {json_url}")
+                try:
+                    # Use a fresh get from the session, which will have the correct referer
+                    response = SESSION.get(json_url, timeout=45)
+                    response.raise_for_status()
+                    data = response.json()
+                    
+                    for record in data:
+                        record['locationName'] = loc['name']
+                        record['speciesName'] = species['name']
+                    all_count_data.extend(data)
+                    print(f"      ✅ Success! Added {len(data)} records for {loc['name']} - {species['name']}.")
+                except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
+                    print(f"      - ERROR: Failed to get or parse JSON for {species['name']}. Error: {e}")
+            else:
+                print(f"      - Warning: No JSON export link found for {species['name']} at this location.")
+
+    if all_count_data:
+        output_filename = 'fish_counts.json'
+        with open(output_filename, 'w', encoding='utf-8') as f:
+            json.dump(all_count_data, f, indent=2, ensure_ascii=False)
+        print(f"\n✅ Success! Saved a total of {len(all_count_data)} fish count records to {output_filename}.")
     else:
-        print("  - Warning: Could not find a JSON download link for fish counts.")
+        print("\n- No fish count data was scraped.")
 
 
 def main():
     """Main function to discover all report pages and scrape them."""
-    print("Starting ADF&G fishing report scraper...")
     
-    # --- STAGE 1: Discover Initial Area Pages ---
-    initial_area_pages = set()
-    print(f"Fetching main report page: {START_URL}")
-    main_soup = get_soup(START_URL)
-    if not main_soup:
-        print("FATAL: Could not fetch the main report page. Exiting.")
-        return
-
-    for a in main_soup.find_all('a', href=True):
-        if 'ReportDetail' in a['href']:
-            initial_area_pages.add(urljoin(BASE_URL, a['href']))
-            
-    print(f"✅ Found {len(initial_area_pages)} main area pages.")
-
-    # --- STAGE 2: Discover All Current Season & Archive Report Links ---
-    master_report_list = []
-    current_year = datetime.now().year
-    years_to_scrape = [str(current_year), str(current_year - 1)]
-    print(f"Scraping reports for years: {', '.join(years_to_scrape)}")
-
-    for area_page_url in initial_area_pages:
-        time.sleep(1)
-        print(f"-> Discovering reports in: {area_page_url}")
-        area_soup = get_soup(area_page_url)
-        if not area_soup: continue
-
-        tab_menu_div = area_soup.select_one('div.oneleveltabs')
-        if tab_menu_div:
-            for a in tab_menu_div.find_all('a', href=True):
-                report_url = urljoin(BASE_URL, a['href'])
-                master_report_list.append({'url': report_url, 'date': a.text.strip()})
-
-        archive_form = area_soup.find('form', attrs={'name': 'CFForm_1'})
-        if archive_form:
-            archive_base_url = urljoin(BASE_URL, archive_form['action'])
-            for year in years_to_scrape:
-                archive_year_url = f"{archive_base_url}&year={year}"
-                print(f"  -> Fetching archives for {year} from {archive_year_url}")
-                archive_soup = get_soup(archive_year_url)
-                if not archive_soup: continue
-                
-                archive_table = archive_soup.find('div', id='EONRarchives').find('table')
-                if not archive_table: continue
-
-                for a in archive_table.find_all('a', href=True):
-                    report_url = urljoin(archive_base_url, a['href'])
-                    master_report_list.append({'url': report_url, 'date': a.text.strip()})
-
-    print(f"✅ Discovered a master list of {len(master_report_list)} total reports to scrape.")
-
-    # --- STAGE 3: SCRAPING ---
-    all_reports_data = []
-    report_id_counter = 1
-    
-    unique_reports = {item['url']: item for item in master_report_list}.values()
-    print(f"✅ After de-duplication, scraping {len(unique_reports)} reports.")
-    
-    for report_info in sorted(list(unique_reports), key=lambda x: x['url']): 
-        time.sleep(1) 
-        page_url = report_info['url']
-        
-        print(f"-> Scraping: {report_info['date']} - {page_url}")
-        page_soup = get_soup(page_url)
-        if not page_soup: continue
-        
-        report_content_div = page_soup.find('div', class_='afterpadder')
-        if not report_content_div:
-            print(f"  - Warning: Could not find 'afterpadder' content on {page_url}")
-            continue
-
-        try:
-            # Clean the content by removing unwanted navigation blocks first
-            for nav_links in report_content_div.select('div.box-links'):
-                nav_links.decompose()
-            for ul in report_content_div.find_all('ul'):
-                if "Emergency Order" in ul.text or "Press Release" in ul.text:
-                    ul.decompose()
-
-            area_name_tag = page_soup.select_one('h1.temph1 span.h1subheader')
-            area_name = area_name_tag.text.strip() if area_name_tag else "Unknown Area"
-            
-            # More precise title/date extraction
-            report_date_tag = report_content_div.find(['h4', 'h3', 'strong'])
-            report_title = report_date_tag.text.strip() if report_date_tag else report_info['date']
-
-            # Extract text only from paragraph tags for a cleaner body
-            paragraphs = report_content_div.find_all('p')
-            full_text_cleaned = '\n\n'.join(p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True))
-
-            # If paragraph extraction fails, fall back to the whole div text
-            if not full_text_cleaned:
-                full_text_cleaned = report_content_div.get_text(separator='\n', strip=True)
-
-            # Identify mentioned species
-            mentioned_species = []
-            lower_text = full_text_cleaned.lower()
-            for species in SPECIES_KEYWORDS:
-                if species in lower_text and species not in mentioned_species:
-                    mentioned_species.append(species)
-            
-            all_reports_data.append({
-                "reportId": f"ADFG-{report_id_counter}",
-                "area": area_name,
-                "title": report_title,
-                "date": report_info['date'], # Keep original link date for filtering
-                "source_url": page_url,
-                "species_mentioned": sorted(list(set(mentioned_species))), # Ensure unique entries
-                "full_text": full_text_cleaned
-            })
-            report_id_counter += 1
-        except Exception as e:
-            print(f"   - Could not parse report content. Error: {e}")
-            continue
-    
-    output_filename = 'reports.json'
-    with open(output_filename, 'w', encoding='utf-8') as f:
-        json.dump(all_reports_data, f, indent=2, ensure_ascii=False)
-        
-    print(f"\n✅ All finished! Scraping complete. Saved {len(all_reports_data)} reports to {output_filename}.")
+    # --- STAGE 1, 2, 3 (Reports) are commented out to focus on Fish Counts ---
+    # print("Starting ADF&G fishing report scraper...")
+    # ... (rest of report scraping code remains commented out) ...
     
     # --- STAGE 4: Scrape Fish Counts ---
     scrape_fish_counts()
