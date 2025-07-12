@@ -532,7 +532,10 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // --- Splash Screen Logic (MODIFIED) ---
+            // --- Global variable to hold query results for the AI ---
+            let currentQueryResults = [];
+
+            // --- Splash Screen Logic ---
             const splashScreen = document.getElementById('splash-screen');
             const splashContent = document.querySelector('.splash-content');
             const enterBtn = document.getElementById('enter-app-btn');
@@ -540,23 +543,11 @@
             const shimmerEffect = document.getElementById('shimmer-effect');
 
             enterBtn.addEventListener('click', (e) => {
-                e.preventDefault(); // Prevent default link behavior
-                
-                // Fade out the button and title
+                e.preventDefault();
                 splashContent.style.opacity = '0';
-
-                // Start the shimmer animation after a short delay
-                setTimeout(() => {
-                    shimmerEffect.classList.add('start-shimmer');
-                }, 100);
-
-
-                // Listen for the shimmer animation to end
+                setTimeout(() => { shimmerEffect.classList.add('start-shimmer'); }, 100);
                 shimmerEffect.addEventListener('animationend', () => {
-                    // Fade out the entire splash screen
                     splashScreen.style.opacity = '0';
-
-                    // After the fade-out transition ends, hide it and show the main app
                     splashScreen.addEventListener('transitionend', () => {
                         splashScreen.style.display = 'none';
                         mainApp.style.display = 'block';
@@ -568,16 +559,13 @@
             // --- Main Application Logic ---
             const buildQueryBtn = document.getElementById('buildQueryBtn');
             const queryCanvas = document.getElementById('queryCanvas');
-            const previewQueryBtn = document.getElementById('previewQueryBtn');
-            const queryPreviewBox = document.getElementById('query-preview-box');
+            const generateInsightsBtn = document.getElementById('generateInsightsBtn');
+            const aiPromptInput = document.getElementById('ai-prompt');
             const runQueryBtn = document.getElementById('runQueryBtn');
             const resultsWindow = document.getElementById('resultsWindow');
-            const dateRangeSelect = document.getElementById('dateRangeSelect');
-            const customDateContainer = document.getElementById('customDateContainer');
-
+            
             buildQueryBtn.addEventListener('click', () => {
                 queryCanvas.style.display = 'block';
-                // Hide the entire hero section for a cleaner app view
                 buildQueryBtn.closest('.hero').style.display = 'none';
                 queryCanvas.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 if(document.querySelectorAll('.condition-row').length === 0) {
@@ -592,39 +580,169 @@
                 if (e.target.classList.contains('and-or-toggle')) toggleAndOr(e.target);
             });
 
-            dateRangeSelect.addEventListener('change', () => {
-                customDateContainer.style.display = (dateRangeSelect.value === 'custom') ? 'flex' : 'none';
-            });
+            runQueryBtn.addEventListener('click', () => {
+                resultsWindow.innerHTML = `<div class="loading-spinner"></div><p style="text-align: center;">Refracting data...</p>`;
+                const queryConditions = getQueryConditions();
 
-            previewQueryBtn.addEventListener('click', () => {
-                const mainGroup = document.getElementById('main-query-group');
-                let queryString = buildQueryString(mainGroup);
-                
-                const dateValue = dateRangeSelect.value;
-                if (dateValue !== 'undefined') {
-                    let dateString = '';
-                    if (dateValue === 'custom') {
-                        const start = document.getElementById('startDate').value;
-                        const end = document.getElementById('endDate').value;
-                        dateString = `DATE_RANGE: '${start || 'YYYY-MM-DD'}' TO '${end || 'YYYY-MM-DD'}'`;
-                    } else {
-                        dateString = `DATE_RANGE: 'Last ${dateValue} Days'`;
-                    }
-                    queryString = (queryString ? `${queryString}\nAND\n` : '') + dateString;
-                }
-                
-                queryPreviewBox.textContent = queryString || "No conditions set.";
+                fetch('reports.json')
+                    .then(response => {
+                        if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
+                        return response.json();
+                    })
+                    .then(allReports => {
+                        const filteredResults = allReports.filter(report => {
+                            if (queryConditions.length === 0) return true;
+                            return queryConditions.every(cond => {
+                                const fieldValue = cond.field.toLowerCase();
+                                const searchValue = cond.value.toLowerCase();
+                                if (!searchValue) return true;
+                                switch (fieldValue) {
+                                    case 'species':
+                                    case 'waterbody':
+                                        return report.full_text.toLowerCase().includes(searchValue);
+                                    case 'area':
+                                        return report.area.toLowerCase().includes(searchValue);
+                                    case 'timeframe':
+                                        return report.title.toLowerCase().includes(searchValue);
+                                    default:
+                                        return false;
+                                }
+                            });
+                        });
+                        
+                        currentQueryResults = filteredResults;
+                        displayResults(filteredResults);
+                    })
+                    .catch(error => {
+                        console.error("Error fetching or processing reports:", error);
+                        resultsWindow.innerHTML = `<p style="color: #ff4d4d; text-align: center;">Error: Could not load report data. Please make sure 'reports.json' is in the same directory.</p>`;
+                    });
             });
             
-            runQueryBtn.addEventListener('click', () => {
-                previewQueryBtn.click();
-                const queryString = queryPreviewBox.textContent;
-                resultsWindow.innerHTML = `<div class="loading-spinner"></div><p style="text-align: center;">Refracting data...</p>`;
+            // --- UPDATED Event Listener for the "Generate Insights" button ---
+            generateInsightsBtn.addEventListener('click', () => {
+                const userQuestion = aiPromptInput.value;
+                if (!userQuestion) {
+                    alert("Please enter a question for the AI.");
+                    return;
+                }
+                if (currentQueryResults.length === 0) {
+                    alert("Please run a query to get some data before asking the AI.");
+                    return;
+                }
+
+                // Step 1: Format the data for the API.
+                const reportText = formatResultsForAI(currentQueryResults);
+                const finalPrompt = `Based on the following data, answer the question: "${userQuestion}"\n\n---DATA---\n${reportText}`;
                 
-                setTimeout(() => {
-                    resultsWindow.innerHTML = `<p><strong>Query Executed:</strong></p><pre style="background: #000; padding: 1rem; border-radius: 6px;">${queryString}</pre><p>...</p><p>Results would be displayed here.</p>`;
-                }, 2000);
+                resultsWindow.innerHTML += `<div class="loading-spinner"></div><p style="text-align: center;">Sending data to public API...</p>`;
+                
+                // Step 2: Send the data to the public API
+                fetch('https://jsonplaceholder.typicode.com/posts', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        title: userQuestion,
+                        body: finalPrompt,
+                        userId: 1, // Just example data
+                    }),
+                    headers: {
+                        'Content-type': 'application/json; charset=UTF-8',
+                    },
+                })
+                .then(response => response.json())
+                .then(json => {
+                    console.log("Response from Test API:", json);
+                    // Step 3: Display a formatted response
+                    const apiResponse = `
+                        <div class="result-item" style="background: rgba(58, 134, 255, 0.1); border-color: var(--accent-blue);">
+                            <h4>Public API Response:</h4>
+                            <p>The API has successfully received your data. It responded with the following confirmation:</p>
+                            <pre style="background: #000; padding: 1rem; border-radius: 6px; white-space: pre-wrap;">${JSON.stringify(json, null, 2)}</pre>
+                            <small>This confirms the end-to-end workflow is functional.</small>
+                        </div>
+                    `;
+                    const spinner = resultsWindow.querySelector('.loading-spinner');
+                    if(spinner) spinner.parentElement.remove();
+                    
+                    resultsWindow.innerHTML += apiResponse;
+                    resultsWindow.scrollTop = resultsWindow.scrollHeight;
+                })
+                .catch(error => {
+                    console.error("Error with API call:", error);
+                    const spinner = resultsWindow.querySelector('.loading-spinner');
+                    if(spinner) spinner.parentElement.remove();
+                    alert("Failed to get a response from the public API.");
+                });
             });
+
+            function formatResultsForAI(results) {
+                if (results.length === 0) {
+                    return "No data was found for the user's query.";
+                }
+                return results.map(report => {
+                    return `
+    Report Area: ${report.area}
+    Report Title: ${report.title}
+    Content: ${report.full_text}
+                    `.trim();
+                }).join('\n\n---\n\n');
+            }
+
+            function displayResults(results) {
+                resultsWindow.innerHTML = ''; 
+                if (results.length === 0) {
+                    resultsWindow.innerHTML = '<p style="text-align: center;">No reports found matching your criteria.</p>';
+                    return;
+                }
+                results.forEach(report => {
+                    const resultEl = document.createElement('div');
+                    resultEl.className = 'result-item';
+                    resultEl.innerHTML = `
+                        <h4>${report.area}: ${report.title}</h4>
+                        <p>${report.full_text.substring(0, 250)}...</p>
+                        <small>Report ID: ${report.reportId}</small>
+                    `;
+                    resultsWindow.appendChild(resultEl);
+                });
+            }
+
+            function getQueryConditions() {
+                const conditions = [];
+                document.querySelectorAll('.condition-row').forEach(row => {
+                    conditions.push({
+                        field: row.querySelector('.query-select').value,
+                        value: row.querySelector('.query-input').value
+                    });
+                });
+                return conditions;
+            }
+
+            function updateInputHints(selectElement) {
+                const selectedValue = selectElement.value;
+                const inputElement = selectElement.closest('.condition-row').querySelector('.query-input');
+                let placeholder = 'Enter value...';
+                let title = 'Enter a search term.';
+                switch (selectedValue) {
+                    case 'Species':
+                        placeholder = "e.g., salmon, trout...";
+                        title = "Enter a fish species, e.g., 'salmon', 'trout', 'grayling'";
+                        break;
+                    case 'Area':
+                        placeholder = "e.g., Anchorage, Kenai...";
+                        title = "Enter a general area, e.g., 'Anchorage', 'Kenai Peninsula'";
+                        break;
+                    case 'Waterbody':
+                        placeholder = "e.g., Ship Creek, Symphony Lake...";
+                        title = "Enter a specific lake, river, or creek, e.g., 'Ship Creek', 'Symphony Lake'";
+                        break;
+                    case 'Timeframe':
+                        placeholder = "e.g., Jul, Oct - Feb...";
+                        title = "Enter a month or period, e.g., 'Jul', 'Oct - Feb', 'Current Report'";
+                        break;
+                }
+                inputElement.placeholder = placeholder;
+                inputElement.title = title;
+            }
 
             let groupIdCounter = 0;
 
@@ -633,8 +751,11 @@
                 const li = document.createElement('li');
                 li.innerHTML = `
                     <div class="condition-row">
-                        <select class="query-select">
-                            <option>User ID</option><option>Report Name</option><option>Engagement Score</option><option>Source API</option>
+                        <select class="query-select" onchange="updateInputHints(this)">
+                            <option>Species</option>
+                            <option>Area</option>
+                            <option>Waterbody</option>
+                            <option>Timeframe</option>
                         </select>
                         <button class="and-or-toggle btn">AND</button>
                         <input type="text" class="query-input" placeholder="Enter value...">
@@ -642,7 +763,11 @@
                     </div>
                 `;
                 targetGroup.appendChild(li);
+                const newSelect = li.querySelector('.query-select');
+                updateInputHints(newSelect);
             }
+            
+            window.updateInputHints = updateInputHints;
 
             function addGroup(targetGroupId) {
                 const parentGroup = document.getElementById(targetGroupId);
@@ -666,39 +791,6 @@
             
             function toggleAndOr(button) {
                 button.textContent = (button.textContent === 'AND') ? 'OR' : 'AND';
-            }
-
-            function buildQueryString(element) {
-                let parts = [];
-                const children = Array.from(element.children);
-
-                for (const li of children) {
-                    const conditionRow = li.querySelector('.condition-row');
-                    const subGroup = li.querySelector('.query-group');
-
-                    if (conditionRow) {
-                        const field = conditionRow.querySelector('.query-select').value;
-                        const value = conditionRow.querySelector('.query-input').value || '""';
-                        const operator = conditionRow.querySelector('.and-or-toggle').textContent;
-                        const formattedValue = (field === 'Report Name' || field === 'Source API') ? `'${value}'` : value;
-                        parts.push({type: 'condition', text: `[${field}] = ${formattedValue}`, operator});
-                    } else if (subGroup) {
-                        const subQuery = buildQueryString(subGroup);
-                        if (subQuery) {
-                           const operator = element.closest('li')?.querySelector('.and-or-toggle')?.textContent || 'AND';
-                           parts.push({type: 'group', text: `(\n  ${subQuery.replace(/\n/g, '\n  ')}\n)`, operator});
-                        }
-                    }
-                }
-                
-                let queryString = '';
-                for (let i = 0; i < parts.length; i++) {
-                    queryString += parts[i].text;
-                    if (i < parts.length - 1) {
-                         queryString += `\n${parts[i].operator}\n`;
-                    }
-                }
-                return queryString;
             }
         });
     </script>
