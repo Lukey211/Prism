@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prism - Clarity From Complexity</title>
+    <style>
+        /* --- General Styles & Font --- */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap');
+
+        :root {
+            --dark-bg: #0D0F12;
+            --primary-text: #FFFFFF;
+            --secondary-text: #8A94A3;
+            --accent-blue: #3A86FF;
+            --accent-pink: #FF007A;
+            --card-bg: rgba(26, 29, 36, 0.7); /* Made semi-transparent for glassmorphism */
+            --border-color: #2C313A;
+            --success-green: #22c55e;
+            --code-bg: #000000;
+        }
+
+        /* --- Keyframe Animations --- */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); }
+            50% { box-shadow: 0 0 25px rgba(34, 197, 94, 0.7); }
+            100% { box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); }
+        }
+        
+        @keyframes spinner {
+            to {transform: rotate(360deg);}
+        }
+        
+        @keyframes aurora {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* MODIFICATION: New shimmer animation */
+        @keyframes shimmer-animation {
+            from {
+                transform: translateX(-100%);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 1;
+            }
+        }
+
+        /* --- Base Body Styles --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--primary-text);
+            margin: 0;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at 10% 20%, rgba(58, 134, 255, 0.15), transparent 40%),
+                        radial-gradient(circle at 90% 80%, rgba(255, 0, 122, 0.15), transparent 40%);
+            background-size: 200% 200%;
+            animation: aurora 15s ease-in-out infinite;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        /* --- Splash Screen --- */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('Image.png');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000;
+            transition: opacity 0.8s ease-out; /* MODIFICATION: Adjusted timing */
+        }
+
+        #splash-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5); /* Dark overlay for text readability */
+        }
+
+        .splash-content {
+            position: relative;
+            text-align: center;
+            z-index: 1001;
+            transition: opacity 0.3s ease-out; /* MODIFICATION: Added transition for fade out */
+        }
+
+        #enter-app-btn {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--primary-text);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            text-decoration: none;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        #enter-app-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 25px rgba(58, 134, 255, 0.4), 0 0 25px rgba(255, 0, 122, 0.4);
+            transform: translateY(-3px);
+        }
+        
+        /* MODIFICATION: New shimmer element styles */
+        #shimmer-effect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to right,
+                transparent 20%,
+                rgba(255, 255, 255, 0.1) 45%,
+                rgba(255, 255, 255, 0.4) 50%,
+                rgba(255, 255, 255, 0.1) 55%,
+                transparent 80%
+            );
+            transform: translateX(-100%);
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .start-shimmer {
+            animation: shimmer-animation 1.2s ease-in-out forwards;
+        }
+
+        /* --- Main App Container --- */
+        #main-app {
+            display: none; /* Initially hidden */
+            animation: fadeIn 1s ease-in;
+        }
+
+        /* --- Navigation Bar --- */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 0;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 4rem;
+            text-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+        }
+
+        .nav-links a {
+            color: var(--secondary-text);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-text);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-blue);
+            color: white;
+            box-shadow: 0 0 15px rgba(58, 134, 255, 0.4);
+        }
+
+        .btn-primary:hover {
+            background-color: #5C9DFF;
+            box-shadow: 0 0 25px rgba(92, 157, 255, 0.6);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background-color: #374151;
+            color: var(--primary-text);
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+
+        /* --- Hero Section --- */
+        .hero-content {
+            text-align: center; /* MODIFICATION: Centered all content within the hero section */
+        }
+        
+        .hero h1 {
+            font-size: 3.8rem;
+            max-width: 750px;
+            margin: 0 auto;
+            line-height: 1.2;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+        }
+
+        #queryCanvas {
+            display: none;
+            padding: 4rem 0 6rem 0;
+            border-top: 1px solid var(--border-color);
+            margin-top: 4rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .app-layout {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+
+        .controls-panel {
+            flex: 1;
+            max-width: 500px;
+        }
+
+        .results-panel, .control-section {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        .results-panel {
+             flex: 2;
+             display: flex;
+             flex-direction: column;
+             position: sticky;
+             top: 2rem;
+        }
+
+        .control-section {
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: left; /* Reset text-align for children */
+        }
+
+        .control-section h2 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .query-group {
+            list-style: none;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .query-group::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 10px;
+            bottom: 10px;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--accent-blue), var(--accent-pink));
+            opacity: 0.3;
+        }
+        
+        .query-group > li {
+            position: relative;
+            padding-top: 1rem;
+            animation: slideIn 0.4s ease-out;
+        }
+        
+        .query-group > li::before {
+            content: '';
+            position: absolute;
+            left: -25px;
+            top: 28px;
+            width: 25px;
+            height: 2px;
+            background: var(--border-color);
+        }
+
+        .condition-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .query-input, .query-select, input[type="date"] {
+            background-color: #2c313a;
+            color: var(--primary-text);
+            border: 1px solid #4b5563;
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            width: 100%;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        .query-input:focus, .query-select:focus, input[type="date"]:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 10px rgba(58, 134, 255, 0.3);
+        }
+        
+        .group-controls {
+            margin-top: 1rem;
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn-submit-query {
+            animation: pulseGlow 2s infinite;
+        }
+        
+        #query-preview-box {
+            font-family: 'Roboto Mono', monospace;
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
+            min-height: 50px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        #customDateContainer {
+             display: none;
+             margin-top: 1rem;
+             gap: 1rem;
+        }
+        
+        .results-window {
+            padding: 2rem;
+            flex-grow: 1;
+            color: var(--secondary-text);
+            overflow-y: auto;
+            min-height: 400px;
+        }
+        
+        .ai-input-area {
+            display: flex;
+            padding: 1.5rem;
+            gap: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .ai-input-area input {
+            flex-grow: 1;
+            background-color: #2c313a;
+            color: var(--primary-text);
+            border: 1px solid #4b5563;
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spinner 1s linear infinite;
+            margin: 4rem auto;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <!-- MODIFICATION: New shimmer element -->
+        <div id="shimmer-effect"></div>
+        <div class="splash-content">
+            <h1 style="font-size: 4rem; font-weight: 700; color: white; margin-bottom: 2rem; text-shadow: 0 0 20px rgba(255, 255, 255, 0.7);">Prism</h1>
+            <a href="#" id="enter-app-btn">Enter</a>
+        </div>
+    </div>
+
+    <!-- Main Application Wrapper -->
+    <div id="main-app">
+        <nav class="navbar container">
+            <div class="logo">Prism</div>
+            <div class="nav-links">
+                <a href="#">Features</a>
+                <a href="#">About</a>
+                <a href="#">Common Usage</a>
+                <a href="#">FAQ</a>
+            </div>
+            <a href="#" class="btn btn-primary">Watch Demo</a>
+        </nav>
+
+        <header class="hero">
+            <div class="container hero-content">
+                <h1 style="font-size: 3.8rem; max-width: 750px; margin: 0 auto; line-height: 1.2;">Clarity From Complexity.</h1>
+                <p style="font-size: 1.1rem; max-width: 650px; color: var(--secondary-text); margin: 1.5rem auto 0 auto;">Prism ingests your complex reports and queries, refracting them into a spectrum of clear, concise and actionable intelligence in masse. Days of devoting hours to reading reports is in the past..</p>
+                <button id="buildQueryBtn" class="btn btn-primary" style="font-size: 1.1rem; padding: 1rem 2rem; margin-top: 2.5rem;">Build my Query...</button>
+                <img src="http://googleusercontent.com/file_content/2" alt="Refracting raw reports into clear insights" class="hero-image" style="margin-top: 3rem; max-width: 700px; width: 100%; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+            </div>
+        </header>
+
+        <section id="queryCanvas">
+            <div class="container app-layout">
+                <div class="controls-panel">
+                    <div class="control-section">
+                        <h2>1. Build Query</h2>
+                        <ul id="main-query-group" class="query-group">
+                            <!-- Query items will be added here as LI elements -->
+                        </ul>
+                        <div class="group-controls">
+                            <button class="btn btn-secondary add-condition" data-target="main-query-group">+ Add Condition</button>
+                            <button class="btn btn-secondary add-group" data-target="main-query-group">+ Add Group</button>
+                        </div>
+                    </div>
+                    <div class="control-section">
+                        <h2>2. Select Date Range</h2>
+                        <select id="dateRangeSelect" class="query-select" style="width: 100%;">
+                            <option value="undefined">Undefined</option>
+                            <option value="1">Last 1 Day</option>
+                            <option value="7">Last 7 Days</option>
+                            <option value="30">Last 30 Days</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                        <div id="customDateContainer">
+                            <input type="date" id="startDate" class="query-input" style="width: 100%;">
+                            <input type="date" id="endDate" class="query-input" style="width: 100%;">
+                        </div>
+                    </div>
+                    <div class="control-section">
+                        <h2>3. Preview Query</h2>
+                        <button id="previewQueryBtn" class="btn btn-secondary" style="width: 100%; margin-bottom: 1rem;">Generate Preview</button>
+                        <div id="query-preview-box">Your query preview will appear here...</div>
+                    </div>
+                    <div class="control-section">
+                        <h2>4. Settings</h2>
+                        <div class="checkbox-container" style="display: flex; align-items: center; gap: 0.75rem; background-color: #2c313a; padding: 1rem; border-radius: 6px;">
+                            <input type="checkbox" id="extractFullReport" name="extractFullReport" style="accent-color: var(--accent-pink); width: 18px; height: 18px;">
+                            <label for="extractFullReport">Extract Full Report (not just summary)</label>
+                        </div>
+                    </div>
+                    <button id="runQueryBtn" class="btn btn-submit-query" style="background-color: var(--success-green); color: white; width: 100%; margin-top: 1rem; font-size: 1.1rem; padding: 0.8rem;">Run Query</button>
+                </div>
+
+                <div class="results-panel">
+                    <div class="results-window" id="resultsWindow">
+                        <div class="results-placeholder" style="text-align: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="color: var(--border-color); margin-bottom: 1rem;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                            <p>Your query results will appear here.</p>
+                        </div>
+                    </div>
+                    <div class="ai-input-area">
+                        <input type="text" id="ai-prompt" placeholder="Ask AI...">
+                        <button id="generateInsightsBtn" class="btn btn-primary">Generate Insights...</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer" style="text-align: center; padding: 3rem 0; margin-top: 4rem; border-top: 1px solid var(--border-color); color: var(--secondary-text);">
+            <p>&copy; 2025 Prism Inc. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- Splash Screen Logic (MODIFIED) ---
+            const splashScreen = document.getElementById('splash-screen');
+            const splashContent = document.querySelector('.splash-content');
+            const enterBtn = document.getElementById('enter-app-btn');
+            const mainApp = document.getElementById('main-app');
+            const shimmerEffect = document.getElementById('shimmer-effect');
+
+            enterBtn.addEventListener('click', (e) => {
+                e.preventDefault(); // Prevent default link behavior
+                
+                // Fade out the button and title
+                splashContent.style.opacity = '0';
+
+                // Start the shimmer animation after a short delay
+                setTimeout(() => {
+                    shimmerEffect.classList.add('start-shimmer');
+                }, 100);
+
+
+                // Listen for the shimmer animation to end
+                shimmerEffect.addEventListener('animationend', () => {
+                    // Fade out the entire splash screen
+                    splashScreen.style.opacity = '0';
+
+                    // After the fade-out transition ends, hide it and show the main app
+                    splashScreen.addEventListener('transitionend', () => {
+                        splashScreen.style.display = 'none';
+                        mainApp.style.display = 'block';
+                    }, { once: true });
+                }, { once: true });
+            });
+
+
+            // --- Main Application Logic ---
+            const buildQueryBtn = document.getElementById('buildQueryBtn');
+            const queryCanvas = document.getElementById('queryCanvas');
+            const previewQueryBtn = document.getElementById('previewQueryBtn');
+            const queryPreviewBox = document.getElementById('query-preview-box');
+            const runQueryBtn = document.getElementById('runQueryBtn');
+            const resultsWindow = document.getElementById('resultsWindow');
+            const dateRangeSelect = document.getElementById('dateRangeSelect');
+            const customDateContainer = document.getElementById('customDateContainer');
+
+            buildQueryBtn.addEventListener('click', () => {
+                queryCanvas.style.display = 'block';
+                // Hide the entire hero section for a cleaner app view
+                buildQueryBtn.closest('.hero').style.display = 'none';
+                queryCanvas.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                if(document.querySelectorAll('.condition-row').length === 0) {
+                    addCondition('main-query-group');
+                }
+            });
+
+            document.getElementById('queryCanvas').addEventListener('click', function(e) {
+                if (e.target.classList.contains('add-condition')) addCondition(e.target.dataset.target);
+                if (e.target.classList.contains('add-group')) addGroup(e.target.dataset.target);
+                if (e.target.classList.contains('remove-btn')) e.target.closest('li').remove();
+                if (e.target.classList.contains('and-or-toggle')) toggleAndOr(e.target);
+            });
+
+            dateRangeSelect.addEventListener('change', () => {
+                customDateContainer.style.display = (dateRangeSelect.value === 'custom') ? 'flex' : 'none';
+            });
+
+            previewQueryBtn.addEventListener('click', () => {
+                const mainGroup = document.getElementById('main-query-group');
+                let queryString = buildQueryString(mainGroup);
+                
+                const dateValue = dateRangeSelect.value;
+                if (dateValue !== 'undefined') {
+                    let dateString = '';
+                    if (dateValue === 'custom') {
+                        const start = document.getElementById('startDate').value;
+                        const end = document.getElementById('endDate').value;
+                        dateString = `DATE_RANGE: '${start || 'YYYY-MM-DD'}' TO '${end || 'YYYY-MM-DD'}'`;
+                    } else {
+                        dateString = `DATE_RANGE: 'Last ${dateValue} Days'`;
+                    }
+                    queryString = (queryString ? `${queryString}\nAND\n` : '') + dateString;
+                }
+                
+                queryPreviewBox.textContent = queryString || "No conditions set.";
+            });
+            
+            runQueryBtn.addEventListener('click', () => {
+                previewQueryBtn.click();
+                const queryString = queryPreviewBox.textContent;
+                resultsWindow.innerHTML = `<div class="loading-spinner"></div><p style="text-align: center;">Refracting data...</p>`;
+                
+                setTimeout(() => {
+                    resultsWindow.innerHTML = `<p><strong>Query Executed:</strong></p><pre style="background: #000; padding: 1rem; border-radius: 6px;">${queryString}</pre><p>...</p><p>Results would be displayed here.</p>`;
+                }, 2000);
+            });
+
+            let groupIdCounter = 0;
+
+            function addCondition(targetGroupId) {
+                const targetGroup = document.getElementById(targetGroupId);
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="condition-row">
+                        <select class="query-select">
+                            <option>User ID</option><option>Report Name</option><option>Engagement Score</option><option>Source API</option>
+                        </select>
+                        <button class="and-or-toggle btn">AND</button>
+                        <input type="text" class="query-input" placeholder="Enter value...">
+                        <button class="remove-btn" style="background: none; border: none; color: var(--secondary-text); font-size: 1.5rem; cursor: pointer; padding:0;">&times;</button>
+                    </div>
+                `;
+                targetGroup.appendChild(li);
+            }
+
+            function addGroup(targetGroupId) {
+                const parentGroup = document.getElementById(targetGroupId);
+                groupIdCounter++;
+                const newGroupId = `group-${groupIdCounter}`;
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 6px;">
+                        <span style="font-size: 0.8rem; color: var(--secondary-text); margin-left: 5px;">Sub-Group</span>
+                        <button class="remove-btn" style="background: none; border: none; color: var(--secondary-text); font-size: 1.5rem; cursor: pointer; padding:0;">&times;</button>
+                    </div>
+                    <ul class="query-group" id="${newGroupId}"></ul>
+                    <div class="group-controls">
+                        <button class="btn btn-secondary add-condition" data-target="${newGroupId}">+ Add Condition</button>
+                        <button class="btn btn-secondary add-group" data-target="${newGroupId}">+ Add Group</button>
+                    </div>
+                `;
+                parentGroup.appendChild(li);
+                addCondition(newGroupId);
+            }
+            
+            function toggleAndOr(button) {
+                button.textContent = (button.textContent === 'AND') ? 'OR' : 'AND';
+            }
+
+            function buildQueryString(element) {
+                let parts = [];
+                const children = Array.from(element.children);
+
+                for (const li of children) {
+                    const conditionRow = li.querySelector('.condition-row');
+                    const subGroup = li.querySelector('.query-group');
+
+                    if (conditionRow) {
+                        const field = conditionRow.querySelector('.query-select').value;
+                        const value = conditionRow.querySelector('.query-input').value || '""';
+                        const operator = conditionRow.querySelector('.and-or-toggle').textContent;
+                        const formattedValue = (field === 'Report Name' || field === 'Source API') ? `'${value}'` : value;
+                        parts.push({type: 'condition', text: `[${field}] = ${formattedValue}`, operator});
+                    } else if (subGroup) {
+                        const subQuery = buildQueryString(subGroup);
+                        if (subQuery) {
+                           const operator = element.closest('li')?.querySelector('.and-or-toggle')?.textContent || 'AND';
+                           parts.push({type: 'group', text: `(\n  ${subQuery.replace(/\n/g, '\n  ')}\n)`, operator});
+                        }
+                    }
+                }
+                
+                let queryString = '';
+                for (let i = 0; i < parts.length; i++) {
+                    queryString += parts[i].text;
+                    if (i < parts.length - 1) {
+                         queryString += `\n${parts[i].operator}\n`;
+                    }
+                }
+                return queryString;
+            }
+        });
+    </script>
+
+</body>
+</html>
