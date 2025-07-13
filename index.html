@@ -14,7 +14,7 @@
             --secondary-text: #8A94A3;
             --accent-blue: #3A86FF;
             --accent-pink: #FF007A;
-            --card-bg: rgba(26, 29, 36, 0.7); /* Made semi-transparent for glassmorphism */
+            --card-bg: rgba(26, 29, 36, 0.7);
             --border-color: #2C313A;
             --success-green: #22c55e;
             --code-bg: #000000;
@@ -26,11 +26,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
-
         @keyframes slideIn {
             from { opacity: 0; transform: translateX(-20px); }
             to { opacity: 1; transform: translateX(0); }
@@ -298,7 +293,7 @@
         .control-section {
             padding: 1.5rem;
             margin-bottom: 2rem;
-            text-align: left; /* Reset text-align for children */
+            text-align: left;
         }
 
         .control-section h2 {
@@ -389,6 +384,7 @@
             white-space: pre-wrap;
             word-wrap: break-word;
         }
+
         #customDateContainer {
              display: none;
              margin-top: 1rem;
@@ -396,7 +392,7 @@
         }
         
         .results-window {
-            padding: 0.5rem; /* MODIFICATION: Reduced padding for accordion */
+            padding: 0.5rem;
             flex-grow: 1;
             color: var(--secondary-text);
             overflow-y: auto;
@@ -429,8 +425,8 @@
             animation: spinner 1s linear infinite;
             margin: 4rem auto;
         }
-
-        /* --- NEW: Accordion Styles --- */
+        
+        /* --- Accordion Styles --- */
         .accordion-item {
             border-bottom: 1px solid var(--border-color);
         }
@@ -495,22 +491,10 @@
             font-family: 'Roboto Mono', monospace;
             margin-top: 0;
         }
-        .panel-content small {
-            font-size: 0.8rem;
-            opacity: 0.8;
-        }
-        .panel-content a {
-            color: var(--accent-blue);
-            text-decoration: none;
-        }
-        .panel-content a:hover {
-            text-decoration: underline;
-        }
-
-
     </style>
 </head>
 <body>
+
     <div id="splash-screen">
         <div id="shimmer-effect"></div>
         <div class="splash-content">
@@ -518,6 +502,7 @@
             <a href="#" id="enter-app-btn">Enter</a>
         </div>
     </div>
+
     <div id="main-app">
         <nav class="navbar container">
             <div class="logo">Prism</div>
@@ -529,6 +514,7 @@
             </div>
             <a href="#" class="btn btn-primary">Watch Demo</a>
         </nav>
+
         <header class="hero">
             <div class="container hero-content">
                 <h1 style="font-size: 3.8rem; max-width: 750px; margin: 0 auto; line-height: 1.2;">Clarity From Complexity.</h1>
@@ -546,6 +532,7 @@
                         <ul id="main-query-group" class="query-group"></ul>
                         <div class="group-controls">
                             <button class="btn btn-secondary add-condition" data-target="main-query-group">+ Add Condition</button>
+                            <button class="btn btn-secondary add-group" data-target="main-query-group">+ Add Group</button>
                         </div>
                     </div>
                     <div class="control-section">
@@ -559,12 +546,17 @@
                             <option value="custom">Custom Range</option>
                         </select>
                         <div id="customDateContainer">
-                            <input type="date" id="startDate">
-                            <input type="date" id="endDate">
+                            <input type="date" id="startDate" class="query-input" style="width: 100%;">
+                            <input type="date" id="endDate" class="query-input" style="width: 100%;">
                         </div>
                     </div>
                     <div class="control-section">
-                        <h2>3. Settings</h2>
+                        <h2>3. Preview Query</h2>
+                        <button id="previewQueryBtn" class="btn btn-secondary" style="width: 100%; margin-bottom: 1rem;">Generate Preview</button>
+                        <div id="query-preview-box">Your query preview will appear here...</div>
+                    </div>
+                    <div class="control-section">
+                        <h2>4. Settings</h2>
                         <div class="checkbox-container" style="display: flex; align-items: center; gap: 0.75rem; background-color: #2c313a; padding: 1rem; border-radius: 6px;">
                             <input type="checkbox" id="extractFullReport" name="extractFullReport" style="accent-color: var(--accent-pink); width: 18px; height: 18px;">
                             <label for="extractFullReport">Extract Full Report (not just summary)</label>
@@ -575,14 +567,14 @@
 
                 <div class="results-panel">
                     <div class="results-window" id="resultsWindow">
-                        <div class="results-placeholder" style="text-align: center; padding: 2rem;">
+                        <div class="results-placeholder" style="text-align: center;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="color: var(--border-color); margin-bottom: 1rem;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
                             <p>Your query results will appear here.</p>
                         </div>
                     </div>
                     <div class="ai-input-area">
-                        <input type="text" id="ai-prompt" placeholder="Ask AI to summarize results...">
-                        <button id="generateInsightsBtn" class="btn btn-primary">Generate Insights</button>
+                        <input type="text" id="ai-prompt" placeholder="Ask AI...">
+                        <button id="generateInsightsBtn" class="btn btn-primary">Generate Insights...</button>
                     </div>
                 </div>
             </div>
@@ -595,33 +587,29 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            let currentQueryResults = [];
-
+            // --- Splash Screen Logic ---
             const splashScreen = document.getElementById('splash-screen');
-            const splashContent = document.querySelector('.splash-content');
             const enterBtn = document.getElementById('enter-app-btn');
             const mainApp = document.getElementById('main-app');
-            const shimmerEffect = document.getElementById('shimmer-effect');
-
+            
             enterBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                splashContent.style.opacity = '0';
-                setTimeout(() => { shimmerEffect.classList.add('start-shimmer'); }, 100);
-                shimmerEffect.addEventListener('animationend', () => {
-                    splashScreen.style.opacity = '0';
-                    splashScreen.addEventListener('transitionend', () => {
-                        splashScreen.style.display = 'none';
-                        mainApp.style.display = 'block';
-                    }, { once: true });
+                splashScreen.style.opacity = '0';
+                splashScreen.addEventListener('transitionend', () => {
+                    splashScreen.style.display = 'none';
+                    mainApp.style.display = 'block';
                 }, { once: true });
             });
-            
+
+            // --- Main Application Logic ---
             const buildQueryBtn = document.getElementById('buildQueryBtn');
             const queryCanvas = document.getElementById('queryCanvas');
             const runQueryBtn = document.getElementById('runQueryBtn');
             const resultsWindow = document.getElementById('resultsWindow');
             const dateRangeSelect = document.getElementById('dateRangeSelect');
             const customDateContainer = document.getElementById('customDateContainer');
+            const previewQueryBtn = document.getElementById('previewQueryBtn');
+            const queryPreviewBox = document.getElementById('query-preview-box');
 
             buildQueryBtn.addEventListener('click', () => {
                 queryCanvas.style.display = 'block';
@@ -631,14 +619,15 @@
                     addCondition('main-query-group');
                 }
             });
-            
+
             document.getElementById('queryCanvas').addEventListener('click', function(e) {
                 if (e.target.classList.contains('add-condition')) addCondition(e.target.dataset.target);
+                if (e.target.classList.contains('add-group')) addGroup(e.target.dataset.target);
                 if (e.target.classList.contains('remove-btn')) e.target.closest('li').remove();
+                if (e.target.classList.contains('and-or-toggle')) toggleAndOr(e.target);
             });
-
-            // MODIFICATION: Add accordion click listener to the results window
-            resultsWindow.addEventListener('click', function(e) {
+            
+             resultsWindow.addEventListener('click', function(e) {
                 const button = e.target.closest('.accordion-button');
                 if (button) {
                     button.classList.toggle('active');
@@ -657,26 +646,217 @@
             
             runQueryBtn.addEventListener('click', () => {
                 resultsWindow.innerHTML = `<div class="loading-spinner"></div><p style="text-align: center;">Refracting data...</p>`;
-                const queryConditions = getQueryConditions();
                 
+                const queryGroupEl = document.getElementById('main-query-group');
+                const queryObject = buildQueryObject(queryGroupEl);
+
                 fetch('reports.json')
                     .then(response => {
                         if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
                         return response.json();
                     })
                     .then(allReports => {
-                        const filteredResults = filterReports(allReports, queryConditions);
-                        currentQueryResults = filteredResults; 
+                        const filteredResults = filterReports(allReports, queryObject);
                         displayResults(filteredResults);
                     })
                     .catch(error => {
                         console.error("Error fetching or processing reports:", error);
-                        resultsWindow.innerHTML = `<p style="color: #ff4d4d; text-align: center;">Error: Could not load report data. Please ensure 'reports.json' is in the same directory.</p>`;
+                        resultsWindow.innerHTML = `<p style="color: #ff4d4d; text-align: center;">Error: Could not load report data. Please check console.</p>`;
                     });
             });
 
-            function filterReports(allReports, queryConditions) {
-                const dateRangeValue = dateRangeSelect.value;
+            // --- RESTORED: Preview Button Logic ---
+            previewQueryBtn.addEventListener('click', () => {
+                const mainGroup = document.getElementById('main-query-group');
+                let queryString = buildQueryString(mainGroup);
+                
+                const dateValue = dateRangeSelect.value;
+                if (dateValue !== 'all') {
+                    let dateString = '';
+                    if (dateValue === 'custom') {
+                        const start = document.getElementById('startDate').value;
+                        const end = document.getElementById('endDate').value;
+                        dateString = `DATE_RANGE: '${start || 'YYYY-MM-DD'}' TO '${end || 'YYYY-MM-DD'}'`;
+                    } else {
+                        dateString = `DATE_RANGE: 'Last ${dateValue} Days'`;
+                    }
+                    queryString = (queryString ? `${queryString}\nAND\n` : '') + dateString;
+                }
+                
+                queryPreviewBox.textContent = queryString || "No conditions set.";
+            });
+
+            let groupIdCounter = 0;
+
+            function addCondition(targetGroupId) {
+                const targetGroup = document.getElementById(targetGroupId);
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="condition-row">
+                        <select class="query-select" onchange="updateInputHints(this)">
+                            <option>Species</option>
+                            <option>Area</option>
+                            <option>Waterbody</option>
+                            <option>Any Text</option>
+                        </select>
+                        <button class="and-or-toggle btn">AND</button>
+                        <input type="text" class="query-input" placeholder="e.g., salmon, halibut...">
+                        <button class="remove-btn" style="background: none; border: none; color: var(--secondary-text); font-size: 1.5rem; cursor: pointer; padding:0;">&times;</button>
+                    </div>
+                `;
+                targetGroup.appendChild(li);
+            }
+
+            function addGroup(targetGroupId) {
+                const parentGroup = document.getElementById(targetGroupId);
+                groupIdCounter++;
+                const newGroupId = `group-${groupIdCounter}`;
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 6px;">
+                        <span style="font-size: 0.8rem; color: var(--secondary-text); margin-left: 5px;">Sub-Group</span>
+                        <button class="remove-btn" style="background: none; border: none; color: var(--secondary-text); font-size: 1.5rem; cursor: pointer; padding:0;">&times;</button>
+                    </div>
+                    <ul class="query-group" id="${newGroupId}"></ul>
+                    <div class="group-controls">
+                        <button class="btn btn-secondary add-condition" data-target="${newGroupId}">+ Add Condition</button>
+                        <button class="btn btn-secondary add-group" data-target="${newGroupId}">+ Add Group</button>
+                    </div>
+                `;
+                parentGroup.appendChild(li);
+                addCondition(newGroupId);
+            }
+            
+            function toggleAndOr(button) {
+                button.textContent = (button.textContent === 'AND') ? 'OR' : 'AND';
+            }
+            
+            window.updateInputHints = function(selectElement) {
+                const selectedValue = selectElement.value;
+                const inputElement = selectElement.closest('.condition-row').querySelector('.query-input');
+                let placeholder = 'Enter value...';
+                switch (selectedValue) {
+                    case 'Species':
+                        placeholder = "e.g., salmon, halibut...";
+                        break;
+                    case 'Area':
+                        placeholder = "e.g., Anchorage, Kenai...";
+                        break;
+                    case 'Waterbody':
+                        placeholder = "e.g., Ship Creek, Buskin River...";
+                        break;
+                    case 'Any Text':
+                         placeholder = "e.g., slow fishing, weir...";
+                         break;
+                }
+                inputElement.placeholder = placeholder;
+            };
+
+            // --- RESTORED: Recursive function to build a query string for preview ---
+            function buildQueryString(element) {
+                let parts = [];
+                const children = Array.from(element.children);
+
+                for (let i = 0; i < children.length; i++) {
+                    const li = children[i];
+                    const conditionRow = li.querySelector('.condition-row');
+                    const subGroup = li.querySelector('.query-group');
+
+                    if (conditionRow) {
+                        const field = conditionRow.querySelector('.query-select').value;
+                        const value = conditionRow.querySelector('.query-input').value || '""';
+                        const operator = conditionRow.querySelector('.and-or-toggle').textContent;
+                        const formattedValue = `'${value}'`;
+                        parts.push({text: `[${field}] = ${formattedValue}`, operator: operator});
+                    } else if (subGroup) {
+                        const subQuery = buildQueryString(subGroup);
+                        if (subQuery) {
+                           // The operator for a group is determined by the toggle on its own line item in the parent
+                           const operator = li.querySelector('.and-or-toggle')?.textContent || 'AND';
+                           parts.push({text: `(\n  ${subQuery.replace(/\n/g, '\n  ')}\n)`, operator: operator});
+                        }
+                    }
+                }
+                
+                let queryString = '';
+                for (let i = 0; i < parts.length; i++) {
+                    queryString += parts[i].text;
+                    if (i < parts.length - 1) {
+                         queryString += `\n${parts[i].operator}\n`;
+                    }
+                }
+                return queryString;
+            }
+
+            function buildQueryObject(element) {
+                const children = Array.from(element.children);
+                let items = [];
+
+                for (const li of children) {
+                    const conditionRow = li.querySelector('.condition-row');
+                    const subGroupEl = li.querySelector('.query-group');
+
+                    if (conditionRow) {
+                        const field = conditionRow.querySelector('.query-select').value;
+                        const value = conditionRow.querySelector('.query-input').value;
+                        const operator = conditionRow.querySelector('.and-or-toggle').textContent.trim();
+                        if (value) {
+                            items.push({ type: 'condition', field, value, operator });
+                        }
+                    } else if (subGroupEl) {
+                        const operator = li.previousElementSibling?.querySelector('.and-or-toggle')?.textContent.trim() || 'AND';
+                        items.push({ type: 'group', operator: operator, query: buildQueryObject(subGroupEl) });
+                    }
+                }
+                return items;
+            }
+
+            function evaluateQuery(report, queryItems) {
+                if (queryItems.length === 0) return true;
+
+                let overallResult = false;
+                let currentAndBlockResult = true;
+
+                for (let i = 0; i < queryItems.length; i++) {
+                    const item = queryItems[i];
+                    let itemResult;
+
+                    if (item.type === 'condition') {
+                        itemResult = checkCondition(report, item);
+                    } else { // type === 'group'
+                        itemResult = evaluateQuery(report, item.query);
+                    }
+                    
+                    const operator = (i === 0) ? 'AND' : queryItems[i-1].operator;
+
+                    if (operator === 'AND') {
+                        currentAndBlockResult = currentAndBlockResult && itemResult;
+                    } else { // OR
+                        overallResult = overallResult || currentAndBlockResult;
+                        currentAndBlockResult = itemResult;
+                    }
+                }
+                return overallResult || currentAndBlockResult;
+            }
+            
+            function checkCondition(report, cond) {
+                const searchValue = cond.value.toLowerCase();
+                if (!searchValue) return true; 
+                switch (cond.field.toLowerCase()) {
+                    case 'species':
+                        return report.species_mentioned && report.species_mentioned.some(s => s.toLowerCase().includes(searchValue));
+                    case 'area':
+                        return report.area.toLowerCase().includes(searchValue);
+                    case 'waterbody':
+                    case 'any text':
+                        return report.full_text.toLowerCase().includes(searchValue) || report.title.toLowerCase().includes(searchValue);
+                    default:
+                        return false;
+                }
+            }
+
+            function filterReports(allReports, queryObject) {
+                 const dateRangeValue = dateRangeSelect.value;
                 let startDate = null;
                 let endDate = new Date();
 
@@ -684,65 +864,32 @@
                     if (dateRangeValue === 'custom') {
                         startDate = document.getElementById('startDate').value ? new Date(document.getElementById('startDate').value) : null;
                         endDate = document.getElementById('endDate').value ? new Date(document.getElementById('endDate').value) : new Date();
+                        if(startDate) startDate.setHours(0,0,0,0);
+                        if(endDate) endDate.setHours(23,59,59,999);
                     } else {
                         const days = parseInt(dateRangeValue, 10);
                         if (!isNaN(days)) {
                             startDate = new Date();
                             startDate.setDate(startDate.getDate() - days);
+                            startDate.setHours(0,0,0,0);
                         }
                     }
                 }
-
+                
                 return allReports.filter(report => {
-                    // Date Filtering
                     let dateIsValid = true;
                     if(startDate) {
-                        try {
-                            const reportDate = new Date(report.date);
-                            // Handling for invalid dates like "Current Report"
-                            if (isNaN(reportDate.getTime())) {
-                                throw new Error("Invalid Date");
-                            }
-                            // Set time to 0 to compare dates only
-                            reportDate.setHours(0,0,0,0);
-                            startDate.setHours(0,0,0,0);
-                            
-                            if (reportDate < startDate || reportDate > endDate) {
-                                dateIsValid = false;
-                            }
-                        } catch(e) {
-                            // If date is invalid (e.g., "Current Report"), exclude it from date-filtered queries
-                            // unless the range is "all time".
-                            if(dateRangeValue !== 'all') {
-                                dateIsValid = false;
-                            }
+                        const reportDate = new Date(report.date);
+                        if (isNaN(reportDate.getTime()) || reportDate < startDate || reportDate > endDate) {
+                            dateIsValid = false;
                         }
                     }
                     if (!dateIsValid) return false;
-                    
-                    // Condition Filtering
-                    if (queryConditions.length === 0) return true;
-                    return queryConditions.every(cond => {
-                        const searchValue = cond.value.toLowerCase();
-                        if (!searchValue) return true; // Ignore empty condition
-                        
-                        switch (cond.field.toLowerCase()) {
-                            case 'species':
-                                return report.species_mentioned && report.species_mentioned.some(s => s.toLowerCase().includes(searchValue));
-                            case 'area':
-                                return report.area.toLowerCase().includes(searchValue);
-                            case 'waterbody':
-                                return report.full_text.toLowerCase().includes(searchValue);
-                             case 'any text':
-                                return report.full_text.toLowerCase().includes(searchValue) || report.title.toLowerCase().includes(searchValue) || report.area.toLowerCase().includes(searchValue);
-                            default:
-                                return false;
-                        }
-                    });
+
+                    return evaluateQuery(report, queryObject);
                 });
             }
-
-            // MODIFICATION: Updated displayResults to create the accordion layout
+            
             function displayResults(results) {
                 resultsWindow.innerHTML = '';
                 if (results.length === 0) {
@@ -758,74 +905,11 @@
                         <div class="panel">
                             <div class="panel-content">
                                 <p>${report.full_text}</p>
-                                <hr style="border-color: var(--border-color); opacity: 0.5; margin: 1rem 0;">
-                                <small>URL: <a href="${report.source_url}" target="_blank" rel="noopener noreferrer">${report.source_url}</a></small>
-                                <br>
-                                <small>Species Mentioned: ${report.species_mentioned.join(', ') || 'None specified'}</small>
                             </div>
                         </div>
                     </div>
                 `).join('');
                 resultsWindow.innerHTML = resultsHtml;
-            }
-
-            function getQueryConditions() {
-                const conditions = [];
-                document.querySelectorAll('.condition-row').forEach(row => {
-                    const field = row.querySelector('.query-select').value;
-                    const value = row.querySelector('.query-input').value;
-                    if (value) {
-                         conditions.push({ field, value });
-                    }
-                });
-                return conditions;
-            }
-            
-            function addCondition(targetGroupId) {
-                const targetGroup = document.getElementById(targetGroupId);
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <div class="condition-row">
-                        <select class="query-select" onchange="updateInputHints(this)">
-                            <option>Species</option>
-                            <option>Area</option>
-                            <option>Waterbody</option>
-                            <option>Any Text</option>
-                        </select>
-                        <input type="text" class="query-input" placeholder="e.g., salmon, trout...">
-                        <button class="remove-btn" style="background: none; border: none; color: var(--secondary-text); font-size: 1.5rem; cursor: pointer; padding:0;">&times;</button>
-                    </div>
-                `;
-                targetGroup.appendChild(li);
-                const newSelect = li.querySelector('.query-select');
-                updateInputHints(newSelect);
-            }
-            
-            window.updateInputHints = function(selectElement) {
-                const selectedValue = selectElement.value;
-                const inputElement = selectElement.closest('.condition-row').querySelector('.query-input');
-                let placeholder = 'Enter value...';
-                let title = 'Enter a search term.';
-                switch (selectedValue) {
-                    case 'Species':
-                        placeholder = "e.g., salmon, halibut...";
-                        title = "Enter a fish species, e.g., 'salmon', 'trout', 'halibut'";
-                        break;
-                    case 'Area':
-                        placeholder = "e.g., Anchorage, Kenai...";
-                        title = "Enter a general area, e.g., 'Anchorage', 'Kenai Peninsula', 'Kodiak'";
-                        break;
-                    case 'Waterbody':
-                        placeholder = "e.g., Ship Creek, Buskin River...";
-                        title = "Enter a specific lake, river, or creek, e.g., 'Ship Creek', 'Buskin River'";
-                        break;
-                    case 'Any Text':
-                         placeholder = "e.g., slow fishing, weir...";
-                         title = "Search for any word or phrase in the report.";
-                         break;
-                }
-                inputElement.placeholder = placeholder;
-                inputElement.title = title;
             }
         });
     </script>
